@@ -1,5 +1,7 @@
-import './globals.css'
-import { Inter } from 'next/font/google'
+import { Inter } from 'next/font/google';
+import './globals.css';
+import 'react-pdf/dist/cjs/Page/AnnotationLayer.css';
+import 'react-pdf/dist/cjs/Page/TextLayer.css';
 
 const inter = Inter({ subsets: ['latin'] })
 

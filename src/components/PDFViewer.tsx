@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 
 // Configure worker on client side only
@@ -14,7 +14,8 @@ interface PDFViewerProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   searchQuery?: string;
-  searchResults?: Array<{page: number, text: string}>;
+  searchResults?: Array<{ page: number; text: string }>;
+  ocrResults: Array<{ page: number; text: string }>;
 }
 
 export default function PDFViewer({
@@ -22,16 +23,23 @@ export default function PDFViewer({
   currentPage,
   onPageChange,
   searchQuery,
-  searchResults = []
+  searchResults = [],
+  ocrResults,
 }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [zoom, setZoom] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
+  const [pageText, setPageText] = useState<string>('');
 
   const onDocumentLoadSuccess = ({ numPages: nextNumPages }: { numPages: number }) => {
     setNumPages(nextNumPages);
     setLoading(false);
   };
+
+  useEffect(() => {
+    const currentOcrResult = ocrResults.find(result => result.page === currentPage);
+    setPageText(currentOcrResult ? currentOcrResult.text : '');
+  }, [currentPage, ocrResults]);
 
   const prevPage = () => {
     if (currentPage > 1) {
@@ -105,7 +113,7 @@ export default function PDFViewer({
         </div>
       </div>
 
-      <div className="overflow-auto border rounded bg-gray-100 flex justify-center min-h-[600px]">
+      <div className="overflow-auto border rounded bg-gray-100 flex justify-center min-h-[600px] flex-col items-center"> {/* Added flex-col and items-center */}
         <Document
           file={url}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -133,14 +141,20 @@ export default function PDFViewer({
             }
           />
         </Document>
+
+        {pageText && (
+          <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg w-full max-w-lg"> {/* Added w-full and max-w-lg for better width control */}
+            <h3 className="font-medium text-gray-800">Extracted Text:</h3>
+            <p className="text-sm mt-1 whitespace-pre-line">{pageText}</p>
+          </div>
+        )}
       </div>
 
       {searchResults.some(result => result.page === currentPage) && searchQuery && (
         <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <h3 className="font-medium text-yellow-800">Search results on this page:</h3>
           <p className="text-sm mt-1">
-            This page contains text matching your search for &quot;{searchQuery}&quot;. The OCR has detected this text
-            on the page.
+            This page contains text matching your search for &quot;{searchQuery}&quot;.
           </p>
         </div>
       )}
